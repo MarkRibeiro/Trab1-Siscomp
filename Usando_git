@@ -1,0 +1,9 @@
+Como subir codigo pro git:
+	1º comando: git add.
+	2º comando: git commit -m "Mensagem"
+		Use o espaço da mensagem para explicar de forma breve o que foi feito nesse commit
+	3º commando: git push
+
+
+Comando de atualização: git pull
+	use esse comando para atualizar seu codigo com a versão que está no git
