@@ -1,0 +1,219 @@
+LEONARDO ABREU SANTOS - 1612734
+MARK RIBEIRO 	      - 1612043
+
+QUESTÃO 1) 
+
+Elaborar programa para obter o maior e o menor número de um vetor, usando n processos e memória compartilhada.
+
+-----------------------------------------------------
+
+lab4ex1.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <time.h>
+
+#define KEY 8855
+#define TAM_VET 32000
+#define NUM_T 10
+#define MAX 64000
+
+int main(int argc, char* argv[]) {
+	int i, j, shmid, status, VetN, aux;
+	int * p;
+	struct timespec inic, fim;
+	
+	if (( shmid = shmget(KEY, (sizeof(int) * TAM_VET) + 2, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR)) == -1) 
+	{
+		perror("Erro no shmget!\n");
+		exit(1);
+	}
+	
+	p = (int *) shmat(shmid, 0, 0);
+
+	srand((unsigned) time(NULL)); // SEED
+
+	// Gera valores inteiros aleatórios
+	for (i = 0; i < TAM_VET; i++) 
+	{
+		p[i] = rand() % MAX;
+	}
+
+	p[TAM_VET + 0] = MAX; // posição TAM_VET = MENOR
+	p[TAM_VET + 1] = 0; // => posição TAM_VET+1 = MAIOR
+
+	VetN = TAM_VET / NUM_T;
+
+	clock_gettime(CLOCK_MONOTONIC, &inic); // Inicia cronometro
+
+	// Cria NUM_T processos
+	for (int i = 0; i < NUM_T; i++) 
+	{
+		if(fork() == 0) {
+			for (j = 0; j < VetN; j++) 
+			{
+				aux = p[(VetN * i) + j];
+				if (aux < p[TAM_VET + 0]) 
+				{
+					p[TAM_VET + 0] = aux; // Troca Menor
+				}
+				if (aux > p[TAM_VET + 1]) 
+				{
+					p[TAM_VET + 1] = aux; // Troca Maior
+				}
+			}
+			
+			shmdt(p);
+			exit(0);
+		}
+	}
+	while (wait(&status) >  0) {}
+  	clock_gettime(CLOCK_MONOTONIC, &fim); // Finaliza cronometro
+  	
+  	printf("-Menor Inteiro do Array: %d\n", p[TAM_VET + 0]);
+  	printf("-Maior Inteiro do Array: %d\n", p[TAM_VET + 1]);
+  	printf("-Tempo de execucao em milliseconds: %f\n", (fim.tv_nsec-inic.tv_nsec)/1000000.0);
+  	
+	shmdt(p);
+  	shmctl (shmid, IPC_RMID, 0);
+	return 0;
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$gcc -o lab4ex1 lab4ex1.c
+$./lab4ex1
+
+----------------------------------------------------- 
+
+RESULTADO
+
+Os processos retornaram a busca pelo maior e menor inteiro bem sucedida. Os tempos de execuções foram:
+
+Processo
+	1k:  0.881
+	4K:	 0,935
+	16k: 1,149
+
+Thread:
+	1k:  0,476
+	4k:	 0,555
+	16k: 0,622
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+Apesar de uma busca mais otimizada, processos se mostram ser mais lentos que threads.
+
+
+-----------------------------------------------------
+
+
+QUESTÃO 2) 
+
+Elaborar programa para obter o maior e o menor número de um vetor, usando n threads.
+	
+-----------------------------------------------------
+
+lab4ex2.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <pthread.h>
+
+#define KEY 8855
+#define NUM_T 10
+#define TAM_VET 16000
+#define MAX 64000
+
+int v[TAM_VET];
+int min = MAX;
+int max = 0;
+
+
+static void procura(int i) {
+	int j, n;
+	int VetN = TAM_VET / NUM_T;
+	for (j = 0; j < VetN; j++) 
+	{
+		n = v[(VetN * (i)) + j];
+
+		if (n < min) 
+		{
+			min = n; // Troca Menor
+		}
+		if (n > max) 
+		{
+			max = n; // Troca Maior
+		}
+	}
+}
+
+int main(int argc, char* argv[]) 
+{
+	int i;
+	struct timespec inic, fim;
+	
+	for (i = 0; i < TAM_VET; i++) 
+	{
+		v[i] = rand() % MAX;
+	}
+	min = MAX; // MENOR
+	max = 0; // MAIOR
+    
+	pthread_t threads[NUM_T];
+    
+	clock_gettime(CLOCK_MONOTONIC, &inic); // Inicia cronometro
+	for (int i = 0; i < NUM_T; i++)
+		pthread_create(&threads[i], NULL, procura, i);
+	
+	for(i = 0; i < NUM_T; i++)
+		pthread_join(threads[i], NULL);
+		
+  	clock_gettime(CLOCK_MONOTONIC, &fim); // Finaliza cronometro
+  	
+  	printf("Menor encontrado: %d\n", min);
+  	printf("Maior encontrado: %d\n", max);
+  	printf("Tempo de execucao em milliseconds: %f\n", (fim.tv_nsec-inic.tv_nsec)/1000000.0);
+  	
+	return 0;
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -o lab4ex2 lab4ex2.c
+$./lab4ex2
+----------------------------------------------------- 
+
+Processo
+	1k:  0.881
+	4K:	 0,935
+	16k: 1,149
+
+Thread:
+	1k:  0,476
+	4k:	 0,555
+	16k: 0,622
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+A divisão da procura em um array, utilizando threads é mais eficiente que a divisão utilizando processos.
+
+-----------------------------------------------------
+
+(Gráfico de conclusão em anexo também no email)
+
+

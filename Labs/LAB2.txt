@@ -1,0 +1,304 @@
+Leonardo Abreu Santos - 1612734
+
+QUESTÃO 1) O que acontece se alterarmos o local da chamada waitpid() 
+no programa (para depois da printf).
+
+-----------------------------------------------------
+
+ex01.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main (int argc, char *argv[]) 
+{
+	int segmento, *p, id, pid, status;
+	
+	segmento = shmget (IPC_PRIVATE, sizeof (int), IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR); // aloca a memória compartilhada
+	
+	// associa a memória compartilhada ao processo
+	p = (int *) shmat (segmento, 0, 0); // comparar o retorno com -1
+	*p = 8752;
+
+	if ((id = fork()) < 0) 
+	{
+		puts ("Erro na criação do novo processo");
+		exit (-2);
+	}
+	else 
+		if (id == 0) 
+		{
+			*p += 5;
+			printf ("Processo filho = %d\n", *p);
+		} 
+		else 
+		{
+			pid = wait (&status);
+			*p += 10;
+			printf ("Processo pai = %d\n", *p);
+		}
+
+	// libera a memória compartilhada do processo
+	shmdt (p);
+
+	// libera a memória compartilhada
+	shmctl (segmento, IPC_RMID, 0);
+
+	return 0;
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -o ex01 ex01.c
+$ ./ex01
+
+----------------------------------------------------- 
+
+RESULTADO:
+
+- ANTES DO PRINTF():
+	Processo filho = 8757
+	Processo pai = 8767
+
+- DEPOIS DO PRINTF():
+	Processo pai = 8762
+	Processo filho = 8767
+
+---------------------------------------------------- 
+
+CONCLUSÃO:
+
+Ao ser chamado wait() antes do printf() o processo pai espera o filho terminar de ser executado.
+Enquanto, ao ser chamado depois do printf(), os processos executam o comando de soma e printf() em paralelo.
+
+-----------------------------------------------------
+-----------------------------------------------------
+
+
+QUESTÃO 2) 
+- Faça um programa que:
+	Leia uma mensagem do dia
+	Crie uma memória compartilhada com a chave 8765
+	Salve a mensagem na memória
+	
+- Faça um outro programa que utilize a mesma chave (8765) e exiba a mensagem do dia para o usuário
+
+-----------------------------------------------------
+
+le_msg_dia.c
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+
+int main ()
+{
+	char mensagem[50];
+	int i;
+	char *p;
+
+	// Leitura da mensagem
+	printf("Escreva a mensagem do dia:\n");
+	scanf("%[^\n]s", mensagem);
+	
+	i = shmget(8765, sizeof(char) * 50, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+	
+    if (i == -1) //tratamento de erro para chamada shmget
+    {
+        puts ("Erro na alocação de novo espaço de memória compartilhada");
+        exit (-2);
+    }
+	p = (char *) shmat(i, 0, 0);
+	
+	strcpy(p, mensagem);
+	
+    shmdt (p); // libera a memória a anexação com o processo compartilhado
+
+	return 0;
+}
+
+
+
+ve_msg_dia.c
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+
+int main ()
+{
+	char *p;
+	
+	int i = shmget(8765, sizeof(char) * 50, S_IRUSR);
+	
+    if (i == -1) //tratamento de erro para chamada shmget
+    {
+        puts ("Erro na alocação de novo espaço de memória compartilhada");
+        exit (-2);
+    }
+	
+	p = (char *) shmat(i, 0, 0);
+	
+	printf("%s\n", p);
+	
+    shmdt (p); // libera a memória a anexação com o processo compartilhado
+    
+    shmctl (i, IPC_RMID, 0); // libera a memória compartilhada
+
+	return 0;
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+	$gcc -Wall -o le_msg_dia le_msg_dia.c
+	$gcc -Wall -o ve_msg_dia ve_msg_dia.c
+	$ ./le_msg_dia
+	Escreva a mensagem do dia:
+	Mensagem do dia TESTE!
+	$ ./ve_msg_dia
+	Mensagem do dia TESTE!
+
+----------------------------------------------------- 
+
+RESULTADO
+
+	A mensagem escrita na memoria compartilhada, pelo programa le_msg_dia, é visivel e foi lida pelo outro programa (ve_msg_dia)
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+	A memoria compartilhada alocada pode ser submetida a um acoplamento, tanto para o programa que alocou, 
+	quanto ao programa que possua o identificador da area de memoria alocada (retornado pelo metodo de alocacao).
+	Apos o acoplamento, a memoria torna-se acessivel por ambos programas. Ao fim, é desacoplado o programa dessa memoria e liberarado a memoria alocada. 
+
+-----------------------------------------------------
+-----------------------------------------------------
+
+
+QUESTÃO 3) 
+	Faça um programa paralelo para localizar
+	uma chave em um vetor.
+	- Crie uma memória compartilhada com dados desordenados e a divida pelo número de processos
+	- Cada processo deve procurar o dado na sua área de memória e informar a posição onde o dado foi localizado.
+	
+-----------------------------------------------------
+
+procura.c
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+
+#define KEY 8765
+
+int main(int argc, char* argv[]) 
+{
+	int i, j, shmid, status, inteiro_procurado = 10;
+	int vetor_inteiros[] = {40, 12, 55, 9, 16, 18, 14, 22, 37, 82, 10, 31, 2, 4};
+	int * p;
+	
+	// aloca memoria compartilhada
+	if (( shmid = shmget(KEY, sizeof(int) * 15, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR)) == -1) 
+	{
+		perror("Erro no shmget") ;
+		exit(1) ;
+	}
+
+	// acoplar a memoria compartilhada e popular com o array
+	printf("Numero procurado: %d\n Vetor de inteiros:\n", inteiro_procurado);
+
+	p = (int *) shmat(shmid, 0, 0);
+
+    for (i = 0; i <= 14; i++) 
+	{
+    	p[i] = vetor_inteiros[i];
+    	printf("%d ", p[i]);
+    }
+    printf("\n");
+
+    // guarda na memoria compartilhada o valor da posicao encontrada
+    p[15] = -1; // -1 (não achou)
+
+    // cria 4 processos para procurarem nas memorias
+	for (int i = 0; i < 4; i++) 
+	{
+		if(fork() == 0) 
+		{
+			for (j = 0; j < 3; j++) 
+			{
+				if (p[3*i + j] == inteiro_procurado) 
+				{
+					p[15] = 3*i + j;
+				}
+			}
+			
+			shmdt(p); // desacopla esse processo da memoria compartilhada
+			
+			exit(0); // acabar com o processo filho
+		}
+	}
+	while (wait(&status) >  0) {}
+  	
+	// mostra o resultado da busca
+  	if (p[15] > 0) 
+	{
+  		printf("Posição achada: %d\n", p[15]);
+  	} 
+	else 
+	{
+  		printf("O inteiro não foi encontrado!\n");
+  	}
+
+  	
+	shmdt(p); // desacopla esse processo da memoria compartilhada
+	
+  	shmctl (shmid, IPC_RMID, 0); // libera a memória compartilhada
+
+	return 0;
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -Wall -o procura procura.c
+$ ./procura
+
+----------------------------------------------------- 
+
+RESULTADO
+
+$ ./procura
+
+O programa procura o numero 10, no vetor [ 40, 12, 55, 9, 16, 18, 14, 22, 37, 82, 10, 31, 2, 4 ] 
+Achou na posicao 10
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+Devido a divisão de tarefas, a busca por um elemento em um array é facilitada, em outras palavras, a busca é otimizada.
+Isso ocorre pois um processo de busca no array entra na fila de execucao do computador (no caso de um processo unico). 
+Nesse programa a busca é dividida em diferentes processos, fazendo com que se possa usar da capacidade de processamento do computador de uma forma mais eficaz
+
+
