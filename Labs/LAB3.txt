@@ -1,0 +1,208 @@
+LEONARDO ABREU SANTOS - 1612734
+MARK RIBEIRO		  - 1612043
+
+QUESTÃO 3) 
+	Tente fazer um programa para interceptar o sinal SIGKILL. Você conseguiu? Explique.
+
+-----------------------------------------------------
+
+lab3ex3.c
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h> 
+#include <signal.h>
+
+#define EVER ;;
+
+void killhandler(int signo);
+
+int main (int argc, char *argv[]) 
+{
+	signal(SIGKILL, killhandler);
+	printf("- pid: %d\n", getpid());
+
+	for(EVER);
+
+	return 0;
+}
+
+void killhandler(int signo)
+{
+	printf("Processo terminado!\n");
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -o lab3ex3 lab3ex3.c
+$ ./lab3ex3
+
+----------------------------------------------------- 
+
+RESULTADO
+
+$ - pid: 16025
+$ kill -s KILL 16025
+$ (killed)
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+O programa foi terminado ao invés de executar o handler. Sendo assim, o sinal SIGKILL não foi interceptado
+
+-----------------------------------------------------
+
+
+QUESTÃO 4) 
+	Faça um programa que leia 2 números reais e imprima o resultado das 4 operações básicas sobre estes 2 números
+		* Verifique o que acontece se o 2o. número da entrada for 0 (zero)
+		* Capture o sinal de erro de floating point (SIGFPE) e repita a experiência anterior
+	
+-----------------------------------------------------
+
+lab3ex4.c
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include<sys/wait.h>
+#include <signal.h>
+void handler(int signo);
+int main (int argc, char *argv[]) 
+{
+	signal(SIGFPE, handler);
+
+	printf( "soma: %.3f\n", atof(argv[1]) + atof(argv[2]) );
+	printf("subtracao: %.3f\n", atof(argv[1]) - atof(argv[2]) );
+	printf("multiplicacao: %.3f\n", atof(argv[1]) * atof(argv[2]) );
+	printf("divisao: %.3f\n", atof(argv[1]) / atof(argv[2]) );
+	
+	return 0;
+}
+void handler(int signo)
+{
+	printf("Handler foi chamado!\n");
+}
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -o lab3ex4 lab3ex4.c
+$ ./lab3ex4 3 0
+
+----------------------------------------------------- 
+
+RESULTADO
+
+soma: 3.000000
+subtracao: 3.000000
+multiplicacao: 0.000000
+divisao: inf
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+Nota-se que o sinal SIGFPE não foi interceptado. O programa se comportou da mesma forma que antes do handler ser definido.
+
+-----------------------------------------------------
+
+
+QUESTÃO 5) 
+Faça um programa para monitorar e informar o preço de chamadas telefônicas. O programa deverá ser executado em background.
+	* O início e o término de uma chamada são informados através dos sinais USR1 e USR2, respectivamente.
+	* O custo da ligação é de 2 centavos por segundo, para ligações de até 1 minuto ou de 1 centavo por segundo a partir do 2o. minuto, ou seja, uma ligação de 1m30s custa R$1,50.
+	
+-----------------------------------------------------
+
+lab3ex5.c
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h> 
+#include <signal.h>
+#include <time.h>
+
+#define EVER ;;
+
+unsigned inicio;
+unsigned fim;
+void usr1(int signo);
+void usr2(int signo);
+
+int main (int argc, char *argv[]) 
+{
+	signal(SIGUSR1, usr1);
+	signal(SIGUSR2, usr2);
+
+	printf("%d\n", getpid());
+
+	for(EVER);
+
+	return 0;
+}
+void usr1(int signo)
+{
+	inicio = (unsigned)time(NULL);
+}
+
+void usr2(int signo)
+{
+	int preco_centavo;
+	unsigned total;
+
+	fim = (unsigned)time(NULL);
+	total = fim - inicio;
+	
+	// PRIMEIRO MINUTO
+	if (total >= 60) 
+	{
+		preco_centavo = 2 * 60;
+		total -= 60;
+	} 
+	else 
+	{
+		preco_centavo = 2 * total;
+		total = 0;
+	}
+	// SEGUNDO MINUTO EM DIANTE
+	if (total > 0) 
+	{
+		preco_centavo += 1 * total;
+	}
+	
+	printf("\n- Preco: R$ %.2f\n\n", (float)preco_centavo / 100);
+
+	exit(0);
+}
+
+
+-----------------------------------------------------
+
+COMPILACAO E EXECUCAO
+
+$ gcc -o lab3ex5 lab3ex5.c
+$ ./lab3ex5
+
+----------------------------------------------------- 
+
+RESULTADO
+
+13387
+$ kill -s SIGUSR1 13387
+(7 segundos de espera)
+$ kill -s SIGUSR2 13387
+Preco: R$ 0.14
+
+---------------------------------------------------- 
+
+CONCLUSÃO
+
+O programa foi executado com sucesso, pois a função foi executada com sucesso. 
+Sinais são diferentes com handlers diferentes. Além disso, o programa implementado bota em prática um problema real.

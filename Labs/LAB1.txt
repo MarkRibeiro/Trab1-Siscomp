@@ -1,0 +1,455 @@
+Leonardo Abreu Santos – 1612734
+Mark Pimentel Matheus Ribeiro – 1612043
+-----------------------------------------------------
+QUESTÃO 1) 
+Faça um programa em que três processos executam em paralelo as seguintes
+ações:
+Pai - Imprime os números de 0 a 99, com um intervalo de 1 segundo entre a
+impressão de cada número. Após imprimir todos os números, imprime a frase
+“Processo pai vai finalizar” e finaliza quando o filho terminar.
+Filho - Imprime os números de 100 a 199, com um intervalo de 2 segundo entre a
+impressão cada número. Antes de imprimir os números, imprime a frase “Filho foi
+criado”.
+Após imprimir todos os números, imprime a frase “processo filho vai finalizar” e finaliza
+quando o neto terminar.
+Neto - filho do processo Filho (ou seja, neto do processo Pai). Imprime os números de
+200 a 299, com um intervalo de 3 segundos entre cada número. Antes de imprimir os
+números, imprime a frase “Neto foi criado”.
+Após imprimir todos os números, imprime a frase “processo neto vai finalizar” e finaliza
+o processo.
+Importante: Em cada printf os processos devem imprimir o seu pid e o pid do seu pai.
+DICA: A chamada ao sistema sleep(1) bloqueia o processo por 1 segundo.
+Pergunta-se: É possível observar os processos executando em paralelo? Como?
+-----------------------------------------------------
+ARQUIVO.C
+#include<stdio.h>
+#include <sys/types.h> 
+#include <sys/wait.h> 
+#include <unistd.h> 
+
+int status;
+int cont = 0;
+	
+int main ()
+{	
+	if(fork() != 0)
+	{
+		for(; cont<100 ; cont++)
+		{
+			printf("(P)cont: %d\tpid: %d\tpid do meu pai: %d\n", cont, getpid(), getppid());
+			sleep(1);
+		}
+		printf("Processo pai vai finalizar\n");
+		waitpid(-1, &status, 0);
+	}
+
+	else
+	{
+		if(fork() !=0)
+		{
+			printf("Filho foi criado\n");
+			for(cont=100; cont<200 ; cont++)
+			{
+				printf("(F)cont: %d\tpid: %d\tpid do meu pai: %d\n", cont, getpid(), getppid());
+				sleep(2);
+			}
+			printf("Processo Filho vai finalizar\n");
+			waitpid(-1, &status, 0);
+		}
+
+		else
+		{
+			printf("Neto foi criado\n");
+			for(cont=200; cont<300 ; cont++)
+			{
+				printf("(N)cont: %d\tpid: %d\tpid do meu pai: %d\n", cont, getpid(), getppid());
+				sleep(3);
+			}
+		}
+	}
+		return 0;
+}
+-----------------------------------------------------
+COMPILAÇÃO E EXECUÇÃO
+$ gcc -Wall -o ex1 ex1.c
+$ ./ex1
+-----------------------------------------------------
+RESULTADO
+(P)cont: 0	pid: 2504	pid do meu pai: 2151
+Filho foi criado
+(F)cont: 100	pid: 2505	pid do meu pai: 2504
+Neto foi criado
+(N)cont: 200	pid: 2506	pid do meu pai: 2505
+(P)cont: 1		pid: 2504	pid do meu pai: 2151
+(P)cont: 2		pid: 2504	pid do meu pai: 2151
+(F)cont: 101	pid: 2505	pid do meu pai: 2504
+(N)cont: 201	pid: 2506	pid do meu pai: 2505
+(P)cont: 3		pid: 2504	pid do meu pai: 2151
+(F)cont: 102	pid: 2505	pid do meu pai: 2504
+(P)cont: 4		pid: 2504	pid do meu pai: 2151
+(P)cont: 5		pid: 2504	pid do meu pai: 2151
+(N)cont: 202	pid: 2506	pid do meu pai: 2505
+(F)cont: 103	pid: 2505	pid do meu pai: 2504
+(P)cont: 6		pid: 2504	pid do meu pai: 2151
+(P)cont: 7		pid: 2504	pid do meu pai: 2151
+(F)cont: 104	pid: 2505	pid do meu pai: 2504
+(P)cont: 8		pid: 2504	pid do meu pai: 2151
+(N)cont: 203	pid: 2506	pid do meu pai: 2505
+(P)cont: 9		pid: 2504	pid do meu pai: 2151
+(F)cont: 105	pid: 2505	pid do meu pai: 2504
+(P)cont: 10		pid: 2504	pid do meu pai: 2151
+(P)cont: 11		pid: 2504	pid do meu pai: 2151
+(N)cont: 204	pid: 2506	pid do meu pai: 2505
+(F)cont: 106	pid: 2505	pid do meu pai: 2504
+(P)cont: 12		pid: 2504	pid do meu pai: 2151
+(P)cont: 13		pid: 2504	pid do meu pai: 2151
+(F)cont: 107	pid: 2505	pid do meu pai: 2504
+(P)cont: 14		pid: 2504	pid do meu pai: 2151
+(N)cont: 205	pid: 2506	pid do meu pai: 2505
+(P)cont: 15		pid: 2504	pid do meu pai: 2151
+(F)cont: 108	pid: 2505	pid do meu pai: 2504
+(P)cont: 16		pid: 2504	pid do meu pai: 2151
+(P)cont: 17		pid: 2504	pid do meu pai: 2151
+(N)cont: 206	pid: 2506	pid do meu pai: 2505
+(F)cont: 109	pid: 2505	pid do meu pai: 2504
+(P)cont: 18		pid: 2504	pid do meu pai: 2151
+(P)cont: 19		pid: 2504	pid do meu pai: 2151
+(F)cont: 110	pid: 2505	pid do meu pai: 2504
+(P)cont: 20		pid: 2504	pid do meu pai: 2151
+(N)cont: 207	pid: 2506	pid do meu pai: 2505
+(P)cont: 21		pid: 2504	pid do meu pai: 2151
+(F)cont: 111	pid: 2505	pid do meu pai: 2504
+(P)cont: 22		pid: 2504	pid do meu pai: 2151
+(P)cont: 23		pid: 2504	pid do meu pai: 2151
+(N)cont: 208	pid: 2506	pid do meu pai: 2505
+(F)cont: 112	pid: 2505	pid do meu pai: 2504
+(P)cont: 24		pid: 2504	pid do meu pai: 2151
+(P)cont: 25		pid: 2504	pid do meu pai: 2151
+(F)cont: 113	pid: 2505	pid do meu pai: 2504
+(P)cont: 26		pid: 2504	pid do meu pai: 2151
+(N)cont: 209	pid: 2506	pid do meu pai: 2505
+(P)cont: 27		pid: 2504	pid do meu pai: 2151
+(F)cont: 114	pid: 2505	pid do meu pai: 2504
+(P)cont: 28		pid: 2504	pid do meu pai: 2151
+(P)cont: 29		pid: 2504	pid do meu pai: 2151
+(N)cont: 210	pid: 2506	pid do meu pai: 2505
+(F)cont: 115	pid: 2505	pid do meu pai: 2504
+(P)cont: 30		pid: 2504	pid do meu pai: 2151
+(P)cont: 31		pid: 2504	pid do meu pai: 2151
+(F)cont: 116	pid: 2505	pid do meu pai: 2504
+(P)cont: 32		pid: 2504	pid do meu pai: 2151
+(N)cont: 211	pid: 2506	pid do meu pai: 2505
+(P)cont: 33		pid: 2504	pid do meu pai: 2151
+(F)cont: 117	pid: 2505	pid do meu pai: 2504
+(P)cont: 34		pid: 2504	pid do meu pai: 2151
+(P)cont: 35		pid: 2504	pid do meu pai: 2151
+(N)cont: 212	pid: 2506	pid do meu pai: 2505
+(F)cont: 118	pid: 2505	pid do meu pai: 2504
+(P)cont: 36		pid: 2504	pid do meu pai: 2151
+(P)cont: 37		pid: 2504	pid do meu pai: 2151
+(F)cont: 119	pid: 2505	pid do meu pai: 2504
+(P)cont: 38		pid: 2504	pid do meu pai: 2151
+(N)cont: 213	pid: 2506	pid do meu pai: 2505
+(P)cont: 39		pid: 2504	pid do meu pai: 2151
+(F)cont: 120	pid: 2505	pid do meu pai: 2504
+(P)cont: 40		pid: 2504	pid do meu pai: 2151
+(P)cont: 41		pid: 2504	pid do meu pai: 2151
+(N)cont: 214	pid: 2506	pid do meu pai: 2505
+(F)cont: 121	pid: 2505	pid do meu pai: 2504
+(P)cont: 42		pid: 2504	pid do meu pai: 2151
+(P)cont: 43		pid: 2504	pid do meu pai: 2151
+(F)cont: 122	pid: 2505	pid do meu pai: 2504
+(P)cont: 44		pid: 2504	pid do meu pai: 2151
+(N)cont: 215	pid: 2506	pid do meu pai: 2505
+(P)cont: 45		pid: 2504	pid do meu pai: 2151
+(F)cont: 123	pid: 2505	pid do meu pai: 2504
+(P)cont: 46		pid: 2504	pid do meu pai: 2151
+(P)cont: 47		pid: 2504	pid do meu pai: 2151
+(N)cont: 216	pid: 2506	pid do meu pai: 2505
+(F)cont: 124	pid: 2505	pid do meu pai: 2504
+(P)cont: 48		pid: 2504	pid do meu pai: 2151
+(P)cont: 49		pid: 2504	pid do meu pai: 2151
+(F)cont: 125	pid: 2505	pid do meu pai: 2504
+(P)cont: 50		pid: 2504	pid do meu pai: 2151
+(N)cont: 217	pid: 2506	pid do meu pai: 2505
+(P)cont: 51		pid: 2504	pid do meu pai: 2151
+(F)cont: 126	pid: 2505	pid do meu pai: 2504
+(P)cont: 52		pid: 2504	pid do meu pai: 2151
+(P)cont: 53		pid: 2504	pid do meu pai: 2151
+(N)cont: 218	pid: 2506	pid do meu pai: 2505
+(F)cont: 127	pid: 2505	pid do meu pai: 2504
+(P)cont: 54		pid: 2504	pid do meu pai: 2151
+(P)cont: 55		pid: 2504	pid do meu pai: 2151
+(F)cont: 128	pid: 2505	pid do meu pai: 2504
+(P)cont: 56		pid: 2504	pid do meu pai: 2151
+(N)cont: 219	pid: 2506	pid do meu pai: 2505
+(P)cont: 57		pid: 2504	pid do meu pai: 2151
+(F)cont: 129	pid: 2505	pid do meu pai: 2504
+(P)cont: 58		pid: 2504	pid do meu pai: 2151
+(P)cont: 59		pid: 2504	pid do meu pai: 2151
+(N)cont: 220	pid: 2506	pid do meu pai: 2505
+(F)cont: 130	pid: 2505	pid do meu pai: 2504
+(P)cont: 60		pid: 2504	pid do meu pai: 2151
+(P)cont: 61		pid: 2504	pid do meu pai: 2151
+(F)cont: 131	pid: 2505	pid do meu pai: 2504
+(P)cont: 62		pid: 2504	pid do meu pai: 2151
+(N)cont: 221	pid: 2506	pid do meu pai: 2505
+(P)cont: 63		pid: 2504	pid do meu pai: 2151
+(F)cont: 132	pid: 2505	pid do meu pai: 2504
+(P)cont: 64		pid: 2504	pid do meu pai: 2151
+(P)cont: 65		pid: 2504	pid do meu pai: 2151
+(N)cont: 222	pid: 2506	pid do meu pai: 2505
+(F)cont: 133	pid: 2505	pid do meu pai: 2504
+(P)cont: 66		pid: 2504	pid do meu pai: 2151
+(P)cont: 67		pid: 2504	pid do meu pai: 2151
+(F)cont: 134	pid: 2505	pid do meu pai: 2504
+(P)cont: 68		pid: 2504	pid do meu pai: 2151
+(N)cont: 223	pid: 2506	pid do meu pai: 2505
+(P)cont: 69		pid: 2504	pid do meu pai: 2151
+(F)cont: 135	pid: 2505	pid do meu pai: 2504
+(P)cont: 70		pid: 2504	pid do meu pai: 2151
+(P)cont: 71		pid: 2504	pid do meu pai: 2151
+(N)cont: 224	pid: 2506	pid do meu pai: 2505
+(F)cont: 136	pid: 2505	pid do meu pai: 2504
+(P)cont: 72		pid: 2504	pid do meu pai: 2151
+(P)cont: 73		pid: 2504	pid do meu pai: 2151
+(F)cont: 137	pid: 2505	pid do meu pai: 2504
+(P)cont: 74		pid: 2504	pid do meu pai: 2151
+(N)cont: 225	pid: 2506	pid do meu pai: 2505
+(P)cont: 75		pid: 2504	pid do meu pai: 2151
+(F)cont: 138	pid: 2505	pid do meu pai: 2504
+(P)cont: 76		pid: 2504	pid do meu pai: 2151
+(P)cont: 77		pid: 2504	pid do meu pai: 2151
+(N)cont: 226	pid: 2506	pid do meu pai: 2505
+(F)cont: 139	pid: 2505	pid do meu pai: 2504
+(P)cont: 78		pid: 2504	pid do meu pai: 2151
+(P)cont: 79		pid: 2504	pid do meu pai: 2151
+(F)cont: 140	pid: 2505	pid do meu pai: 2504
+(P)cont: 80		pid: 2504	pid do meu pai: 2151
+(N)cont: 227	pid: 2506	pid do meu pai: 2505
+(P)cont: 81		pid: 2504	pid do meu pai: 2151
+(F)cont: 141	pid: 2505	pid do meu pai: 2504
+(P)cont: 82		pid: 2504	pid do meu pai: 2151
+(P)cont: 83		pid: 2504	pid do meu pai: 2151
+(N)cont: 228	pid: 2506	pid do meu pai: 2505
+(F)cont: 142	pid: 2505	pid do meu pai: 2504
+(P)cont: 84		pid: 2504	pid do meu pai: 2151
+(P)cont: 85		pid: 2504	pid do meu pai: 2151
+(F)cont: 143	pid: 2505	pid do meu pai: 2504
+(P)cont: 86		pid: 2504	pid do meu pai: 2151
+(N)cont: 229	pid: 2506	pid do meu pai: 2505
+(P)cont: 87		pid: 2504	pid do meu pai: 2151
+(F)cont: 144	pid: 2505	pid do meu pai: 2504
+(P)cont: 88		pid: 2504	pid do meu pai: 2151
+(P)cont: 89		pid: 2504	pid do meu pai: 2151
+(N)cont: 230	pid: 2506	pid do meu pai: 2505
+(F)cont: 145	pid: 2505	pid do meu pai: 2504
+(P)cont: 90		pid: 2504	pid do meu pai: 2151
+(P)cont: 91		pid: 2504	pid do meu pai: 2151
+(F)cont: 146	pid: 2505	pid do meu pai: 2504
+(P)cont: 92		pid: 2504	pid do meu pai: 2151
+(N)cont: 231	pid: 2506	pid do meu pai: 2505
+(P)cont: 93		pid: 2504	pid do meu pai: 2151
+(F)cont: 147	pid: 2505	pid do meu pai: 2504
+(P)cont: 94		pid: 2504	pid do meu pai: 2151
+(P)cont: 95		pid: 2504	pid do meu pai: 2151
+(N)cont: 232	pid: 2506	pid do meu pai: 2505
+(F)cont: 148	pid: 2505	pid do meu pai: 2504
+(P)cont: 96		pid: 2504	pid do meu pai: 2151
+(P)cont: 97		pid: 2504	pid do meu pai: 2151
+(F)cont: 149	pid: 2505	pid do meu pai: 2504
+(P)cont: 98		pid: 2504	pid do meu pai: 2151
+(N)cont: 233	pid: 2506	pid do meu pai: 2505
+(P)cont: 99		pid: 2504	pid do meu pai: 2151
+(F)cont: 150	pid: 2505	pid do meu pai: 2504
+Processo pai vai finalizar
+(N)cont: 234	pid: 2506	pid do meu pai: 2505
+(F)cont: 151	pid: 2505	pid do meu pai: 2504
+(F)cont: 152	pid: 2505	pid do meu pai: 2504
+(N)cont: 235	pid: 2506	pid do meu pai: 2505
+(F)cont: 153	pid: 2505	pid do meu pai: 2504
+(N)cont: 236	pid: 2506	pid do meu pai: 2505
+(F)cont: 154	pid: 2505	pid do meu pai: 2504
+(F)cont: 155	pid: 2505	pid do meu pai: 2504
+(N)cont: 237	pid: 2506	pid do meu pai: 2505
+(F)cont: 156	pid: 2505	pid do meu pai: 2504
+(N)cont: 238	pid: 2506	pid do meu pai: 2505
+(F)cont: 157	pid: 2505	pid do meu pai: 2504
+(F)cont: 158	pid: 2505	pid do meu pai: 2504
+(N)cont: 239	pid: 2506	pid do meu pai: 2505
+(F)cont: 159	pid: 2505	pid do meu pai: 2504
+(N)cont: 240	pid: 2506	pid do meu pai: 2505
+(F)cont: 160	pid: 2505	pid do meu pai: 2504
+(F)cont: 161	pid: 2505	pid do meu pai: 2504
+(N)cont: 241	pid: 2506	pid do meu pai: 2505
+(F)cont: 162	pid: 2505	pid do meu pai: 2504
+(N)cont: 242	pid: 2506	pid do meu pai: 2505
+(F)cont: 163	pid: 2505	pid do meu pai: 2504
+(F)cont: 164	pid: 2505	pid do meu pai: 2504
+(N)cont: 243	pid: 2506	pid do meu pai: 2505
+(F)cont: 165	pid: 2505	pid do meu pai: 2504
+(N)cont: 244	pid: 2506	pid do meu pai: 2505
+(F)cont: 166	pid: 2505	pid do meu pai: 2504
+(F)cont: 167	pid: 2505	pid do meu pai: 2504
+(N)cont: 245	pid: 2506	pid do meu pai: 2505
+(F)cont: 168	pid: 2505	pid do meu pai: 2504
+(N)cont: 246	pid: 2506	pid do meu pai: 2505
+(F)cont: 169	pid: 2505	pid do meu pai: 2504
+(F)cont: 170	pid: 2505	pid do meu pai: 2504
+(N)cont: 247	pid: 2506	pid do meu pai: 2505
+(F)cont: 171	pid: 2505	pid do meu pai: 2504
+(N)cont: 248	pid: 2506	pid do meu pai: 2505
+(F)cont: 172	pid: 2505	pid do meu pai: 2504
+(F)cont: 173	pid: 2505	pid do meu pai: 2504
+(N)cont: 249	pid: 2506	pid do meu pai: 2505
+(F)cont: 174	pid: 2505	pid do meu pai: 2504
+(N)cont: 250	pid: 2506	pid do meu pai: 2505
+(F)cont: 175	pid: 2505	pid do meu pai: 2504
+(F)cont: 176	pid: 2505	pid do meu pai: 2504
+(N)cont: 251	pid: 2506	pid do meu pai: 2505
+(F)cont: 177	pid: 2505	pid do meu pai: 2504
+(N)cont: 252	pid: 2506	pid do meu pai: 2505
+(F)cont: 178	pid: 2505	pid do meu pai: 2504
+(F)cont: 179	pid: 2505	pid do meu pai: 2504
+(N)cont: 253	pid: 2506	pid do meu pai: 2505
+(F)cont: 180	pid: 2505	pid do meu pai: 2504
+(N)cont: 254	pid: 2506	pid do meu pai: 2505
+(F)cont: 181	pid: 2505	pid do meu pai: 2504
+(F)cont: 182	pid: 2505	pid do meu pai: 2504
+(N)cont: 255	pid: 2506	pid do meu pai: 2505
+(F)cont: 183	pid: 2505	pid do meu pai: 2504
+(N)cont: 256	pid: 2506	pid do meu pai: 2505
+(F)cont: 184	pid: 2505	pid do meu pai: 2504
+(F)cont: 185	pid: 2505	pid do meu pai: 2504
+(N)cont: 257	pid: 2506	pid do meu pai: 2505
+(F)cont: 186	pid: 2505	pid do meu pai: 2504
+(N)cont: 258	pid: 2506	pid do meu pai: 2505
+(F)cont: 187	pid: 2505	pid do meu pai: 2504
+(F)cont: 188	pid: 2505	pid do meu pai: 2504
+(N)cont: 259	pid: 2506	pid do meu pai: 2505
+(F)cont: 189	pid: 2505	pid do meu pai: 2504
+(N)cont: 260	pid: 2506	pid do meu pai: 2505
+(F)cont: 190	pid: 2505	pid do meu pai: 2504
+(F)cont: 191	pid: 2505	pid do meu pai: 2504
+(N)cont: 261	pid: 2506	pid do meu pai: 2505
+(F)cont: 192	pid: 2505	pid do meu pai: 2504
+(N)cont: 262	pid: 2506	pid do meu pai: 2505
+(F)cont: 193	pid: 2505	pid do meu pai: 2504
+(F)cont: 194	pid: 2505	pid do meu pai: 2504
+(N)cont: 263	pid: 2506	pid do meu pai: 2505
+(F)cont: 195	pid: 2505	pid do meu pai: 2504
+(N)cont: 264	pid: 2506	pid do meu pai: 2505
+(F)cont: 196	pid: 2505	pid do meu pai: 2504
+(F)cont: 197	pid: 2505	pid do meu pai: 2504
+(N)cont: 265	pid: 2506	pid do meu pai: 2505
+(F)cont: 198	pid: 2505	pid do meu pai: 2504
+(N)cont: 266	pid: 2506	pid do meu pai: 2505
+(F)cont: 199	pid: 2505	pid do meu pai: 2504
+Processo Filho vai finalizar
+(N)cont: 267	pid: 2506	pid do meu pai: 2505
+(N)cont: 268	pid: 2506	pid do meu pai: 2505
+(N)cont: 269	pid: 2506	pid do meu pai: 2505
+(N)cont: 270	pid: 2506	pid do meu pai: 2505
+(N)cont: 271	pid: 2506	pid do meu pai: 2505
+(N)cont: 272	pid: 2506	pid do meu pai: 2505
+(N)cont: 273	pid: 2506	pid do meu pai: 2505
+(N)cont: 274	pid: 2506	pid do meu pai: 2505
+(N)cont: 275	pid: 2506	pid do meu pai: 2505
+(N)cont: 276	pid: 2506	pid do meu pai: 2505
+(N)cont: 277	pid: 2506	pid do meu pai: 2505
+(N)cont: 278	pid: 2506	pid do meu pai: 2505
+(N)cont: 279	pid: 2506	pid do meu pai: 2505
+(N)cont: 280	pid: 2506	pid do meu pai: 2505
+(N)cont: 281	pid: 2506	pid do meu pai: 2505
+(N)cont: 282	pid: 2506	pid do meu pai: 2505
+(N)cont: 283	pid: 2506	pid do meu pai: 2505
+(N)cont: 284	pid: 2506	pid do meu pai: 2505
+(N)cont: 285	pid: 2506	pid do meu pai: 2505
+(N)cont: 286	pid: 2506	pid do meu pai: 2505
+(N)cont: 287	pid: 2506	pid do meu pai: 2505
+(N)cont: 288	pid: 2506	pid do meu pai: 2505
+(N)cont: 289	pid: 2506	pid do meu pai: 2505
+(N)cont: 290	pid: 2506	pid do meu pai: 2505
+(N)cont: 291	pid: 2506	pid do meu pai: 2505
+(N)cont: 292	pid: 2506	pid do meu pai: 2505
+(N)cont: 293	pid: 2506	pid do meu pai: 2505
+(N)cont: 294	pid: 2506	pid do meu pai: 2505
+(N)cont: 295	pid: 2506	pid do meu pai: 2505
+(N)cont: 296	pid: 2506	pid do meu pai: 2505
+(N)cont: 297	pid: 2506	pid do meu pai: 2505
+(N)cont: 298	pid: 2506	pid do meu pai: 2505
+(N)cont: 299	pid: 2506	pid do meu pai: 2505
+-----------------------------------------------------
+CONCLUSÃO
+Texto com no mínimo 1 parágrafo respondendo à questão e explicando o funcionamento do código feito.
+Sim, é possivel observar os processos executando em paralelo. Pois o comando fork cria um processo filho, e o filho cria um novo processo filho (neto no caso). Os processos possuem identificadores, (P) = Pai - (F) = Filho - (N) = Neto e também o valor de seu pid. Graças a esses identificadores é notável que os programas estão executando ao mesmo tempo. Além disso, os processo não interferem no valor da variável cont dos outros processos, pois, na verdade, são programas diferentes. 
+
+-----------------------------------------------------
+QUESTÃO 2) 
+Implemente os seguintes programas: o primeiro exibe a mensagem “alo
+mundo!”, o segundo implementa o programa echo do Unix, que exibe no terminal
+os argumentos do programa. Compile estes programas. Elabore um programa
+que crie e execute os dois programas que você escreveu: o alomundo e o echo.
+Utilize alguma função da família "execv" para realizar esta atividade.
+DICA: Para saber os protótipos das funções disponíveis execute o comando
+“man” no Terminal (para acessar o manual: "man execv").
+Pergunta1: O que você observou em termos de semelhanças e diferenças para
+executar o alomundo e o echo?
+Pergunta2: Indique como você decidiu implementar os programas. Há
+concorrência? Há hierarquia entre os processos? Explique.
+-----------------------------------------------------
+ex2.c
+#include<stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h> 
+#include <unistd.h> 
+
+int status;
+int cont = 0;
+int pid;
+	
+int main (int argc, char **argv)
+{
+	if(fork() != 0)
+		execv(argv[1], argv);
+		
+	else
+		execv(argv[2], argv);
+		
+	return 0;
+}
+-----------------------------------------------------
+aloMundo.c
+#include<stdio.h>
+int main ()
+{
+	printf("Alo mundo!!\n");
+	return 0;
+}
+-----------------------------------------------------
+echo1.c
+#include<stdio.h>
+int main (int argc, char **argv)
+{
+	for(int i=0; i<argc; i++){
+		printf("%s\n", argv[i]);
+	}
+	return 0;
+}
+-----------------------------------------------------
+COMPILAÇÃO E EXECUÇÃO
+$ gcc -Wall -o ex2 ex2.c
+$ ./ex2 aloMundo echo1
+-----------------------------------------------------
+RESULTADO
+Alo mundo!!
+./ex2
+aloMundo
+echo1
+-----------------------------------------------------
+CONCLUSÃO
+Resposta da pergunta 1: 
+	Ambos imprimem um texto na tela. Porém o alomundo imprime a partir do que é escrito nos direto na função printf(), enquanto o echo imprime o que é escrito no terminal na hora de executar o programa. Os parametros escritos no terminal são armazenados nos parametros da main, em *argv[] e impressos dentro do programa com a função printf.
+Resposta da pergunta 2:
+	Fizemos os programas aloMundo e echo1 e criamos os executaveis. O programa ex2 possui uma main que recebe argc e *argv[], ou seja, irá receber parametros na hora de executar o programa. O programa cria um processo filho usando fork(). O processo pai usa a função execv, o qual recebe de argv[1] (primeiro parametro na execucao do programa pelo terminal) um programa a ser executado (aloMundo no caso), enquanto o processo filho recebe argv[2] (segundo parametro na execucao do programa pelo terminal) também um programa a ser executado. (echo1 no caso).
+
