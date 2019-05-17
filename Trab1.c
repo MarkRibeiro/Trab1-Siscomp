@@ -2,10 +2,13 @@
 #include<unistd.h>
 #include<stdlib.h>
 #include<string.h>
+#include<sys/shm.h>
+#define KEY 5678
 
 typedef struct processo{
 	char nome[20];
-	int rajada;
+	int rajada[3];
+	int nivel;
 }Processo;
 
 typedef struct filas{
@@ -13,46 +16,31 @@ typedef struct filas{
 	Processo p[3];
 }Fila;
 
+void interpretador (FILE *arq, Processo *p)
+{
+	char lixo[4];
+	int i;
+
+	for(i=0;!feof(arq);i++)
+	{
+		fscanf(arq, "%s %s %d %d %d\n", lixo, p[i].nome, &p[i].rajada[0], &p[i].rajada[1], &p[i].rajada[2]);
+		
+		p[i].nivel = 1;
+	}
+}
+
 int main (int argc, char* argv[])
 {
+	int shm;
+	Processo *p;
+	FILE *arq;
+	arq = fopen("exec.txt", "r");
 
-	Fila f[3];
-	Processo p1, p2, p3;
+	shm = shmget(IPC_PRIVATE, sizeof(Processo)*4, 0666 | IPC_CREAT);
 
-	strcpy(p1.nome, "a");
-	p1.rajada=1;
+	p = (Processo*)shmat(shm,0,0);
 
-	strcpy(p2.nome, "b");
-	p2.rajada=2;
+	interpretador(arq, p);
 
-	strcpy(p3.nome, "c");
-	p3.rajada=4;
-
-	f[0].quantum=1;
-	f[0].p[0]=p1;
-
-	f[1].quantum=1;
-	f[1].p[0]=p2;
-
-	f[2].quantum=1;
-	f[2].p[0]=p3;
-
-	execve(f[0].p[0].nome, argv, 0);
-	execve(f[1].p[0].nome, argv, 0);
-	execve(f[2].p[0].nome, argv, 0);	
-	
-	if(fork()!=0) //Pai: Escalonador
-	{
-		
-	}
-	
-	else //Filho: Filas
-	{	
-		if(fork()!=0)
-			execv(f[1].p[0].nome, argv);
-
-		else
-			execv(f[2].p[0].nome, argv);
-	}
-	
+	printf("%s %d %d %d %d\n", p[0].nome, p[0].rajada[0], p[0].rajada[1], p[0].rajada[2], p[0].nivel);
 }
