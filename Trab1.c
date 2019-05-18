@@ -43,7 +43,10 @@ void interpretador (FILE *arq, Processo *p)
 
 void escalonador(Processo *p)
 {
-	Processo *f1=NULL, *f2=NULL, *f3=NULL;
+	Processo *f1=NULL, *f2=NULL, *f3=NULL, *final, *inicio;
+	int i;
+
+	f1=p;
 
 	while(p!=NULL)
 	{
@@ -61,12 +64,14 @@ void escalonador(Processo *p)
 			{
 				p->nivel--;
 			}
+			
 			else
 			{
 				printf("Desceu para o nivel %d", p->nivel);
 			}
 			printf("\n\n");
 		}
+
 		else
 		{
 			printf("===> (+) Completou dentro do quantum\n\n");
