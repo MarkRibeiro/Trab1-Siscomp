@@ -3,14 +3,13 @@
 int main ()
 {
 	int i;
-	
-	printf("Iniciou\n");
-	for(i=0;i<20; i++)
+	printf("-Prog2 Inicializou\n");
+	for(i=0;i<14; i++)
 	{
-		printf("Prog2\n");
+		printf("\tExecutanto Prog2...\n");
 		sleep(1);
 	}
 	
-	printf("Finalizou\n");
+	printf("-Prog2 Finalizou\n");
 	return 0;
 }

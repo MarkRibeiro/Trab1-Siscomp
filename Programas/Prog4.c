@@ -2,13 +2,14 @@
 #include<unistd.h> 
 int main ()
 {
-	int i, f = 1;
-	printf("Iniciou\n");
-	for(i=20;i>1;i--)
+	int i;
+	printf("-Prog4 Inicializou\n");
+	for(i=0;i<56; i++)
 	{
-		f=f*i;
+		printf("\tExecutanto Prog4...\n");
+		sleep(1);
 	}
 	
-	printf("Finalizou\n");
+	printf("-Prog4 Finalizou\n");
 	return 0;
 }
