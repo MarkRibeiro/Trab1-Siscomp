@@ -1,4 +1,4 @@
-exec Prog1 1 2 4
-exec Prog2 2 4 8
-exec Prog3 4 8 16
-exec Prog4 8 16 32
+exec Prog1 1 1 1
+exec Prog2 3 2 2
+exec Prog3 7 4 4
+exec Prog4 7 3 1
