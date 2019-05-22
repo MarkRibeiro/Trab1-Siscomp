@@ -217,11 +217,14 @@ void escalonador(Processo *p)
     }
     
 
-    int frenteFila1 = 0, frenteFila2 = 1, frenteFila3 = 1;
+    int frenteFila1 = 0, frenteFila2 = 0, frenteFila3 = 0;
     int fimFila1, fimFila2, fimFila3;
+    int auxfrenteFila1 = 1;
+    int auxfrenteFila2 = 1;
+    int auxfrenteFila3 = 1;
 
-    //while( contaProcessoAtivo != 0 )
-    //{
+    while( contaProcessoAtivo != 0 )
+    {
     
     	printf("\n+----------------------------------------------+\n");
         printf("|		    FILA 1		       |\n");
@@ -229,8 +232,9 @@ void escalonador(Processo *p)
     
         while(contadorFila1 != 0)
         {
-                //printf("\nALERT: Número de processos na fila 1: %d\n", contadorFila1);
-                //printf("ALERT: Frente fila atual: %d\n\n", frenteFila);
+                printf("\n-ALERT: Número de processos na fila 1: %d\n", contadorFila1);
+                printf("-ALERT: Frente fila atual: %d\n", frenteFila1);
+                printf("-ALERT: Fim fila atual: %d\n\n", fimFila1);
                 
                 if(f1[frenteFila1] == -1)
                 {
@@ -244,6 +248,7 @@ void escalonador(Processo *p)
 
                 printf( "\n===> (!) %s vai para a frente da fila 1 com %d segundos de execucao restantes", nome, rajada );
                 printf( "\n===> (!) Tem %d segundos para terminar\n", QUANTUM[0]);
+                sleep(QUANTUM[0]);
                 
                 resultado = atualizaRajada(f1[frenteFila1], p, QUANTUM[0]);
                 
@@ -262,7 +267,7 @@ void escalonador(Processo *p)
                     printf("\t %s foi para a rajada numero %d\n", nome, getRajadaAtualByPid(f1[frenteFila1], p)+1);
                     printf("\t ...Simula E/S...\n");
                     sleep(IO);
-                    printf("\t %s foi para o fim da fila\n", nome); 
+                    printf("\t %s foi para o fim da fila\n", nome);
                 }
                 else // REBAIXADO: Não terminou dentro do quantum da fila1, vai pra fila2
                 {
@@ -272,34 +277,152 @@ void escalonador(Processo *p)
                     contadorFila2++;
                     contadorFila1--; 
                       
-                    fimFila2 = getFimFila(frenteFila2); // pega o fim da fila2 baseado na frente atual da fila 2
+                    fimFila2 = getFimFila(auxfrenteFila2); // pega o fim da fila2 baseado na frente atual da fila 2
                     
                     f2[fimFila2] = f1[frenteFila1]; // Bota no fim da fila 2
                     
                     f1[frenteFila1] = -1; // tira da fila 1 colocando -1 no lugar
                     
-                    frenteFila2++;
+                    auxfrenteFila2++;
+                    if(auxfrenteFila2 >= MAXPROC) auxfrenteFila2 = 0;
+                    
                     if(frenteFila2 >= MAXPROC) frenteFila2 = 0;
                 }
 
                 frenteFila1++;
+                fimFila1 = getFimFila(frenteFila1);
 
-                if(frenteFila1 >= MAXPROC || contadorFila1 == 1) frenteFila1 = 0; 
-        }
-        
-        printf("ALERT: Estado da fila1: ");
+                if(frenteFila1 >= MAXPROC || contadorFila1 == 1) frenteFila1 = 0;
+                
+                printf("\n-ALERT: Estado da fila1: ");
                 for(i = 0 ; i < MAXPROC ; i++)
                 {
                 	printf("(%d) ", f1[i]);
                 }
-                printf("\n\n");
-        printf("ALERT: Estado da fila2: ");
+                printf("\n");
+        	printf("-ALERT: Estado da fila2: ");
                 for(i = 0 ; i < MAXPROC ; i++)
                 {
                 	printf("(%d) ", f2[i]);
                 }
-                printf("\n\n");
-    //}
+                printf("\n");
+         	printf("-ALERT: Estado da fila3: ");
+                for(i = 0 ; i < MAXPROC ; i++)
+                {
+                	printf("(%d) ", f3[i]);
+                }
+                printf("\n");
+                printf("\n---------------------------------------------------------------------------------------------------------------------------------------\n");
+        }
+        
+        existeFila1 = 0;
+        
+        printf("\n+----------------------------------------------+\n");
+        printf("|		    FILA 2		       |\n");
+        printf("+----------------------------------------------+\n");
+        
+        while(contadorFila2 != 0)
+        {
+        	printf("\n-ALERT: Número de processos na fila 2: %d\n", contadorFila2);
+                printf("-ALERT: Frente Fila2 atual: %d\n", frenteFila2);
+                printf("-ALERT: Fim Fila2 atual: %d\n\n", fimFila2);
+        
+        	if(existeFila1 == 1) break;
+        	
+        	if(f2[frenteFila2] == -1)
+                {
+                	frenteFila2++;
+                }
+                
+                strcpy(nome, getNomeByPid(f2[frenteFila2], p));
+           	rajada		= getRajadaByPid(f2[frenteFila2], p);
+                rajadaAtual 	= getRajadaAtualByPid(f2[frenteFila2], p);
+                nivel 		= getNivelByPid(f2[frenteFila2], p);
+                
+                printf( "\n===> (!) %s vai para a frente da fila 2 com %d segundos de execucao restantes", nome, rajada );
+                printf( "\n===> (!) Tem %d segundos para terminar\n", QUANTUM[1]);
+                sleep(QUANTUM[0]);
+                
+                resultado = atualizaRajada(f2[frenteFila2], p, QUANTUM[1]);
+                
+                if(resultado == 1) // SUCESSO: Terminou rajada dentro do quantum da fila2 e terminou todas as rajadas
+                {
+                	printf( "===> (+) Completou a rajada numero %d dentro do quantum!\n", rajadaAtual+1 );
+                	printf( "\t Programa completou todas suas tarefas!\n\t Finalizar programa!\n\n" );
+                	//if(!kill(pid, SIGCHLD))
+                	f2[frenteFila2] = -1;
+                	contaProcessoAtivo--;
+                	contadorFila2--;
+                }
+                else if(resultado == 0) // PROMOVIDO: Terminou rajada dentro do quantum da fila2 mas NÃO terminou todas as rajadas, sobe de nível
+                {
+                    sobeNivel(f2[frenteFila2], p);
+                    
+                    printf("===> (+) Completou a rajada numero %d dentro do quantum!\n", rajadaAtual+1 );
+                    printf("\t ...Simula E/S...\n");
+                    sleep(IO);
+                    printf("\t %s foi para a rajada numero %d\n", nome, getRajadaAtualByPid(f2[frenteFila2], p)+1);
+                    printf("\t Processo %s sai da fila 2 e vai para a 1.\n", nome);
+                    
+                    f1[frenteFila1] = f2[frenteFila2];
+                    f2[frenteFila2] = -1;
+                    contadorFila2--;
+                    contadorFila1++;
+                    existeFila1 = 1;
+                }
+                else // REBAIXADO: Não terminou dentro do quantum da fila2, vai pra fila3
+                {
+                    desceNivel(f2[frenteFila2], p);
+                    printf("===> (-) Esgotou o quantum do nivel 2! Desceu para o nivel %d\n", getNivelByPid(f2[frenteFila2], p) );
+                    printf("\t Processo %s sai da fila 2 e vai para a 3.\n", nome);
+                    contadorFila3++;
+                    contadorFila2--; 
+                      
+                    fimFila3 = getFimFila(frenteFila3); // pega o fim da fila2 baseado na frente atual da fila 2
+                    
+                    f3[fimFila3] = f2[frenteFila2]; // Bota no fim da fila 2
+                    
+                    f2[frenteFila2] = -1; // tira da fila 1 colocando -1 no lugar
+                    
+                    auxfrenteFila3++;
+                    if(auxfrenteFila3 >= MAXPROC) auxfrenteFila3 = 0;
+                    
+                    if(frenteFila3 >= MAXPROC) frenteFila3 = 0;
+                }
+                
+                frenteFila2++;
+                fimFila2 = getFimFila(frenteFila2);
+                
+                if(frenteFila2 >= MAXPROC) frenteFila2 = 0;
+                
+                printf("\n-ALERT: Estado da fila1: ");
+                for(i = 0 ; i < MAXPROC ; i++)
+                {
+                	printf("(%d) ", f1[i]);
+                }
+                printf("\n");
+        	printf("-ALERT: Estado da fila2: ");
+                for(i = 0 ; i < MAXPROC ; i++)
+                {
+                	printf("(%d) ", f2[i]);
+                }
+                printf("\n");
+         	printf("-ALERT: Estado da fila3: ");
+                for(i = 0 ; i < MAXPROC ; i++)
+                {
+                	printf("(%d) ", f3[i]);
+                }
+                printf("\n");
+                printf("\n---------------------------------------------------------------------------------------------------------------------------------------\n");
+        }
+         
+        if(contadorFila1 == 0 && contadorFila2 == 0)
+        {
+        	contaProcessoAtivo = 0;
+        }
+                   
+    }
+    
 }
 
 
