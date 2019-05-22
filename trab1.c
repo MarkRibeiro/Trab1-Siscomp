@@ -378,7 +378,7 @@ void escalonador(Processo *p)
                     contadorFila3++;
                     contadorFila2--; 
                       
-                    fimFila3 = getFimFila(frenteFila3); // pega o fim da fila2 baseado na frente atual da fila 2
+                    fimFila3 = getFimFila(auxfrenteFila3); // pega o fim da fila2 baseado na frente atual da fila 2
                     
                     f3[fimFila3] = f2[frenteFila2]; // Bota no fim da fila 2
                     
