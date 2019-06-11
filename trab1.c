@@ -22,17 +22,19 @@ typedef struct processo{
     int rajadaAtual;
 }Processo;
 
-void interpretador (FILE *arq, Processo *p)
+void interpretador (Processo *p)
 {
-    char exec[4];
+    char exec[5];
     int i;
+    FILE *arq = fopen("exec.txt", "r");
 
     for(i=0;!feof(arq);i++)
     {
         fscanf(arq, "%s %s %d %d %d\n", exec, p[i].nome, &p[i].rajada[0], &p[i].rajada[1], &p[i].rajada[2]);
-        p[i].nivel = 1; // <=== MUDANDO AQUI PARA TESTAR, MARK
-        p[i].rajadaAtual = 0; // <=== MUDANDO AQUI PARA TESTAR, MARK
+        p[i].nivel = 1; 
+        p[i].rajadaAtual = 0; 
     }
+    fclose(arq);
 }
 
 char* getNomeByPid (int pid, Processo *p)
@@ -261,7 +263,7 @@ void escalonador(Processo *p)
                 {
                     printf("===> (+) Completou a rajada numero %d dentro do quantum!\n", rajadaAtual+1 );
                     printf("\t %s foi para a rajada numero %d\n", nome, getRajadaAtualByPid(f1[frenteFila1], p)+1);
-                    printf("\t ...Simula E/S...\n");
+                    printf("\t ...Simula E/S... (%d Segundos)\n", IO);
                     sleep(IO);
                     printf("\t %s foi para o fim da fila\n", nome);
                 }
@@ -354,7 +356,7 @@ void escalonador(Processo *p)
                     sobeNivel(f2[frenteFila2], p);
                     
                     printf("===> (+) Completou a rajada numero %d dentro do quantum!\n", rajadaAtual+1 );
-                    printf("\t ...Simula E/S...\n");
+                    printf("\t ...Simula E/S... (%d Segundos)\n", IO);
                     sleep(IO);
                     printf("\t %s foi para a rajada numero %d\n", nome, getRajadaAtualByPid(f2[frenteFila2], p)+1);
                     printf("\t Processo %s sai da fila 2 e vai para a 1.\n", nome);
@@ -455,7 +457,7 @@ void escalonador(Processo *p)
                     	sobeNivel(f3[frenteFila3], p);
                     
                    	 printf("===> (+) Completou a rajada numero %d dentro do quantum!\n", rajadaAtual+1 );
-                   	 printf("\t ...Simula E/S...\n");
+                   	 printf("\t ...Simula E/S... (%d Segundos)\n", IO);
                    	 sleep(IO);
                    	 printf("\t %s foi para a rajada numero %d\n", nome, getRajadaAtualByPid(f3[frenteFila3], p)+1);
                    	 printf("\t Processo %s sai da fila 3 e vai para a 2.\n", nome);
@@ -509,15 +511,14 @@ int main (int argc, char* argv[])
 {
     int shm;
     Processo *p = (Processo*) malloc (MAXPROC * sizeof(Processo));
-    FILE *arq;
-    arq = fopen("exec.txt", "r");
 
-    shm = shmget(IPC_PRIVATE, sizeof(Processo)*4, 0666 | IPC_CREAT);
+    shm = shmget(IPC_PRIVATE, sizeof(Processo)*MAXPROC, 0666 | IPC_CREAT);
 
     p = (Processo*)shmat(shm,0,0);
 
-    interpretador(arq, p);
+    interpretador(p);
 
     escalonador(p);
 
 }
+		
